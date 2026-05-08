@@ -1,20 +1,29 @@
-<link rel="stylesheet" href="/static/style.css">
-<div style="padding:20px;">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dungeon AI</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="header">DUNGEON AI CONTROL PANEL</div>
+
+<div class="main">
 
 <div class="card">
 
-<h2>Send Message</h2>
+<h2>Broadcast Message</h2>
 
-<form action="/message" method="post">
+<form action="/send_message" method="POST">
 
-<input name="sender" placeholder="Dungeon AI">
-<input name="category" placeholder="announcement">
-<input name="target" placeholder="all">
-<textarea name="content"></textarea>
+<input name="sender" placeholder="Sender Name">
+<input name="target" placeholder="Target CID or all">
+<input name="type" placeholder="system / npc / announcement">
 
-<button>
-Send
-</button>
+<textarea name="msg" placeholder="Message"></textarea>
+
+<button>Send</button>
 
 </form>
 
@@ -22,35 +31,40 @@ Send
 
 <div class="card">
 
-<h2>Apply Effect</h2>
+<h2>Apply Global Effect</h2>
 
-<form action="/effect" method="post">
+<form action="/apply_effect" method="POST">
 
-<input name="character_id" placeholder="Character ID">
-<input name="name" placeholder="Fragile">
-<input name="duration" placeholder="2">
-<textarea name="effect_text"></textarea>
+<input name="cid" placeholder="Character ID">
 
-<button>
-Apply
-</button>
+<input name="name" placeholder="Effect Name">
+<input name="duration" placeholder="Duration (turns)">
+
+<textarea name="payload" placeholder="Effect Text (+10 Strength, -20% speed)"></textarea>
+
+<button>Apply Effect</button>
 
 </form>
 
 </div>
+
+<div class="card">
+
+<h2>Active Crawlers Overview</h2>
 
 {% for c in chars %}
+<div class="skill">
 
-<div class="card">
-
-<h2>{{c.name}}</h2>
-
-<p>HP: {{c.hp}} / {{c.max_hp}}</p>
-<p>Mana: {{c.mana}} / {{c.max_mana}}</p>
-<p>Level: {{c.level}}</p>
+<b>{{c.name}}</b><br>
+HP: {{c.hp}} / {{c.max_hp}}<br>
+Mana: {{c.mana}} / {{c.max_mana}}
 
 </div>
-
 {% endfor %}
 
 </div>
+
+</div>
+
+</body>
+</html>
