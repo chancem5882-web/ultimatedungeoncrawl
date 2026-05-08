@@ -1,180 +1,201 @@
-from flask import Flask, render_template, request, redirect, jsonify
-from flask_socketio import SocketIO
-from database.db import db
-from database.models import Character, Effect, Message
-from systems.parser import parse_equipment
-import os
+import os, uuid, sqlite3, random, re
+from flask import Flask, render_template, request, jsonify, redirect
+from flask_socketio import SocketIO, emit, join_room
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
-app.config["SECRET_KEY"] = "dcc-secret"
+DB = "data/db.sqlite3"
+os.makedirs("data", exist_ok=True)
 
-# IMPORTANT: Render-safe absolute DB path
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////opt/render/project/src/data/dcc.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+STATS = ["Strength","Dexterity","Intelligence","Constitution","Charisma"]
 
-os.makedirs("/opt/render/project/src/data", exist_ok=True)
+# ---------------- DB ----------------
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+def db():
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-db.init_app(app)
+def init():
+    c = db().cursor()
 
-with app.app_context():
-    db.create_all()
+    c.execute("""CREATE TABLE IF NOT EXISTS characters(
+        id TEXT PRIMARY KEY,
+        name TEXT
+    )""")
 
+    c.execute("""CREATE TABLE IF NOT EXISTS stats(
+        cid TEXT,
+        stat TEXT,
+        base INT,
+        equip INT
+    )""")
 
-# ---------------------------
-# HOME
-# ---------------------------
+    c.execute("""CREATE TABLE IF NOT EXISTS meta(
+        cid TEXT,
+        hp INT,
+        max_hp INT,
+        mana INT,
+        max_mana INT,
+        level INT,
+        gold INT
+    )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS equipment(
+        cid TEXT,
+        text TEXT
+    )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS effects(
+        id TEXT,
+        cid TEXT,
+        name TEXT,
+        duration INT,
+        payload TEXT
+    )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS messages(
+        id TEXT,
+        cid TEXT,
+        sender TEXT,
+        type TEXT,
+        msg TEXT
+    )""")
+
+    db().commit()
+    db().close()
+
+# ---------------- PARSER ----------------
+
+def parse(text):
+    stats = {s:0 for s in STATS}
+    skills = {}
+
+    if not text:
+        return stats, skills
+
+    for line in text.lower().split("\n"):
+
+        for v,n in re.findall(r"([+-]?\d+)\s*%\s*([a-z ]+)", line):
+            skills[n.strip()] = skills.get(n.strip(),0)+int(v)
+
+        for v,n in re.findall(r"([+-]?\d+)\s*([a-z]+)", line):
+            for s in STATS:
+                if n.startswith(s[:3].lower()):
+                    stats[s]+=int(v)
+
+    return stats,skills
+
+# ---------------- HOME ----------------
+
 @app.route("/")
 def home():
-    chars = Character.query.all()
+    c = db().cursor()
+    chars = c.execute("SELECT * FROM characters").fetchall()
     return render_template("index.html", chars=chars)
 
+# ---------------- CREATE ----------------
 
-# ---------------------------
-# CREATE CHARACTER
-# ---------------------------
 @app.route("/create", methods=["POST"])
 def create():
-    name = request.form.get("name")
+    cid = str(uuid.uuid4())
 
-    char = Character(name=name)
+    c = db().cursor()
+    c.execute("INSERT INTO characters VALUES (?,?)",(cid,request.form["name"]))
 
-    db.session.add(char)
-    db.session.commit()
+    for s in STATS:
+        c.execute("INSERT INTO stats VALUES (?,?,?,?)",(cid,s,10,0))
 
-    return redirect(f"/character/{char.id}")
+    c.execute("INSERT INTO meta VALUES (?,?,?,?,?,?,?)",(cid,100,100,50,50,1,0))
 
+    db().commit()
+    return redirect(f"/c/{cid}")
 
-# ---------------------------
-# CHARACTER PAGE
-# ---------------------------
-@app.route("/character/<int:cid>")
+# ---------------- CHARACTER ----------------
+
+@app.route("/c/<cid>")
 def character(cid):
-    char = Character.query.get_or_404(cid)
+    c = db().cursor()
 
-    parsed = parse_equipment(char.equipment or "")
+    char = c.execute("SELECT * FROM characters WHERE id=?",(cid,)).fetchone()
+    meta = c.execute("SELECT * FROM meta WHERE cid=?",(cid,)).fetchone()
 
-    effects = Effect.query.filter_by(character_id=cid).all()
+    stats = c.execute("SELECT * FROM stats WHERE cid=?",(cid,)).fetchall()
 
-    messages = Message.query.filter(
-        (Message.target == "all") | (Message.target == str(cid))
-    ).all()
+    eq = c.execute("SELECT text FROM equipment WHERE cid=?",(cid,)).fetchone()
+    eq_text = eq["text"] if eq else ""
 
-    return render_template(
-        "character.html",
+    eq_stats,_ = parse(eq_text)
+
+    final = {}
+
+    for s in stats:
+        total = s["base"] + s["equip"] + eq_stats[s["stat"]]
+        final[s["stat"]] = {
+            "base":s["base"],
+            "total":total,
+            "mod":total//5
+        }
+
+    return render_template("character.html",
         char=char,
-        parsed=parsed,
-        effects=effects,
-        messages=messages
+        meta=meta,
+        stats=final,
+        cid=cid,
+        equipment=eq_text
     )
 
+# ---------------- SAVE EQUIPMENT ----------------
 
-# ---------------------------
-# UPDATE CHARACTER
-# ---------------------------
-@app.route("/update/<int:cid>", methods=["POST"])
-def update(cid):
-    char = Character.query.get_or_404(cid)
-
+@app.route("/save/<cid>", methods=["POST"])
+def save(cid):
     data = request.json
 
-    char.level = data.get("level", 1)
+    c = db().cursor()
+    c.execute("DELETE FROM equipment WHERE cid=?",(cid,))
+    c.execute("INSERT INTO equipment VALUES (?,?)",(cid,data["equipment"]))
 
-    char.hp = data.get("hp", 100)
-    char.max_hp = data.get("max_hp", 100)
+    db().commit()
 
-    char.mana = data.get("mana", 50)
-    char.max_mana = data.get("max_mana", 50)
+    socketio.emit("update",{ "cid":cid },room=cid)
 
-    char.gold = data.get("gold", 0)
+    return {"ok":True}
 
-    char.strength = data.get("strength", 10)
-    char.dexterity = data.get("dexterity", 10)
-    char.intelligence = data.get("intelligence", 10)
-    char.constitution = data.get("constitution", 10)
-    char.charisma = data.get("charisma", 10)
+# ---------------- DICE ENGINE ----------------
 
-    char.equipment = data.get("equipment", "")
-    char.inventory = data.get("inventory", "")
-    char.spells = data.get("spells", "")
-    char.skills = data.get("skills", "")
+@socketio.on("roll")
+def roll(data):
+    result = random.randint(1,20)
+    emit("roll_result",{"result":result},room=data["cid"])
 
-    db.session.commit()
+# ---------------- REALTIME JOIN ----------------
 
-    socketio.emit("character_updated", {"id": cid})
+@socketio.on("join")
+def join(data):
+    join_room(data["cid"])
 
-    return jsonify({"success": True})
+# ---------------- EFFECTS (BUFF SYSTEM) ----------------
 
+@socketio.on("apply_effect")
+def effect(data):
+    c = db().cursor()
 
-# ---------------------------
-# DM PANEL
-# ---------------------------
-@app.route("/dm")
-def dm():
-    chars = Character.query.all()
-    effects = Effect.query.all()
-    messages = Message.query.all()
+    c.execute("INSERT INTO effects VALUES (?,?,?,?,?)",(
+        str(uuid.uuid4()),
+        data["cid"],
+        data["name"],
+        data["duration"],
+        data["payload"]
+    ))
 
-    return render_template(
-        "dm.html",
-        chars=chars,
-        effects=effects,
-        messages=messages
-    )
+    db().commit()
 
+    emit("effect_update",data,room=data["cid"])
 
-# ---------------------------
-# ADD EFFECT
-# ---------------------------
-@app.route("/effect", methods=["POST"])
-def add_effect():
-    effect = Effect(
-        character_id=request.form.get("character_id"),
-        name=request.form.get("name"),
-        duration=request.form.get("duration"),
-        effect_text=request.form.get("effect_text")
-    )
+# ---------------- INIT ----------------
 
-    db.session.add(effect)
-    db.session.commit()
+init()
 
-    socketio.emit("effect_added")
-
-    return redirect("/dm")
-
-
-# ---------------------------
-# MESSAGE SYSTEM
-# ---------------------------
-@app.route("/message", methods=["POST"])
-def send_message():
-    msg = Message(
-        sender=request.form.get("sender"),
-        category=request.form.get("category"),
-        target=request.form.get("target"),
-        content=request.form.get("content")
-    )
-
-    db.session.add(msg)
-    db.session.commit()
-
-    socketio.emit("new_message")
-
-    return redirect("/dm")
-
-
-# ---------------------------
-# SOCKET CONNECT
-# ---------------------------
-@socketio.on("connect")
-def connect():
-    print("Client connected")
-
-
-# ---------------------------
-# RUN SERVER
-# ---------------------------
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=10000)
+    socketio.run(app,host="0.0.0.0",port=10000)
