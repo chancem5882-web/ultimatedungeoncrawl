@@ -1,36 +1,23 @@
-async function updateCharacter(id){
+let cid = window.location.pathname.split("/").pop();
+let socket = io();
 
-const data = {
+socket.emit("join",{cid});
 
-level: document.getElementById("level").value,
-
-hp: document.getElementById("hp").value,
-max_hp: document.getElementById("max_hp").value,
-
-mana: document.getElementById("mana").value,
-max_mana: document.getElementById("max_mana").value,
-
-gold: document.getElementById("gold").value,
-
-strength: document.getElementById("strength").value,
-dexterity: document.getElementById("dexterity").value,
-intelligence: document.getElementById("intelligence").value,
-constitution: document.getElementById("constitution").value,
-charisma: document.getElementById("charisma").value,
-
-equipment: document.getElementById("equipment").value,
-inventory: document.getElementById("inventory").value,
-spells: document.getElementById("spells").value,
-skills: document.getElementById("skills").value,
-
-}
-
-await fetch(`/update/${id}`,
-{
+function save(){
+fetch("/save/"+cid,{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify(data)
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+equipment:document.getElementById("equipment").innerText
 })
+});
 }
+
+function roll(){
+socket.emit("roll",{cid});
+}
+
+socket.on("roll_result",(d)=>{
+document.getElementById("feed").innerHTML =
+"🎲 Roll: "+d.result;
+});
