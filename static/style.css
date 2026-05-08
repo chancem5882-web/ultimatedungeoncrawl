@@ -1,1 +1,49 @@
+body{
+margin:0;
+font-family:Arial;
+background:#070710;
+color:white;
+}
 
+.header{
+padding:20px;
+text-align:center;
+font-size:36px;
+background:#101030;
+border-bottom:2px solid magenta;
+}
+
+.main{
+display:grid;
+grid-template-columns:350px 1fr;
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:#111133;
+padding:20px;
+border-radius:14px;
+margin-bottom:20px;
+}
+
+input,
+textarea{
+width:100%;
+padding:12px;
+margin-bottom:12px;
+background:#050510;
+color:white;
+border:1px solid #4444aa;
+border-radius:8px;
+}
+
+button{
+background:magenta;
+color:black;
+padding:12px;
+border:none;
+border-radius:8px;
+font-weight:bold;
+width:100%;
+}
