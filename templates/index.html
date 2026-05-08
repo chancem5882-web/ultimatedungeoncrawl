@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>DCC MMO Hub</title>
-    <link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-<div class="header">DUNGEON CRAWLER MMO HUB</div>
+<div class="header">DCC MMO FIXED</div>
 
 <div class="main">
 
@@ -15,38 +14,23 @@
 
 <h2>Create Character</h2>
 
-<form action="/create" method="POST">
-
-<input name="name" placeholder="Crawler Name">
-
-<button type="submit">Create</button>
-
+<form method="POST" action="/create">
+<input name="name" placeholder="Name">
+<button>Create</button>
 </form>
 
 </div>
 
 <div class="card">
 
-<h2>Active Crawlers</h2>
+<h2>Characters</h2>
 
 {% for c in chars %}
 <div class="skill">
-<b>{{c.name}}</b><br>
-<a href="/c/{{c.id}}">
-<button>Enter Character</button>
-</a>
+{{c.name}}<br>
+<a href="/c/{{c.id}}"><button>Enter</button></a>
 </div>
 {% endfor %}
-
-</div>
-
-<div class="card">
-
-<h2>Dungeon AI Access</h2>
-
-<a href="/dm">
-<button>Enter DM Panel</button>
-</a>
 
 </div>
 
