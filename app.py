@@ -7,9 +7,14 @@ from flask import Flask, render_template, request, jsonify, redirect
 from flask_socketio import SocketIO, emit, join_room
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
-# ================= SAFE DB PATH (FIXES RENDER CRASHES)
+# IMPORTANT: switch async_mode away from eventlet
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+    async_mode="gevent"
+)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "db.sqlite3")
 
@@ -17,7 +22,7 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 STATS = ["Strength","Dexterity","Intelligence","Constitution","Charisma"]
 
-# ================= DB =================
+# ---------------- DB ----------------
 
 def db():
     conn = sqlite3.connect(DB_PATH)
@@ -27,24 +32,19 @@ def db():
 def init():
     c = db().cursor()
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS characters(
+    c.execute("""CREATE TABLE IF NOT EXISTS characters(
         id TEXT PRIMARY KEY,
         name TEXT
-    )
-    """)
+    )""")
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS stats(
+    c.execute("""CREATE TABLE IF NOT EXISTS stats(
         cid TEXT,
         stat TEXT,
         base INT,
         equip INT
-    )
-    """)
+    )""")
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS meta(
+    c.execute("""CREATE TABLE IF NOT EXISTS meta(
         cid TEXT,
         hp INT,
         max_hp INT,
@@ -52,20 +52,17 @@ def init():
         max_mana INT,
         level INT,
         gold INT
-    )
-    """)
+    )""")
 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS equipment(
+    c.execute("""CREATE TABLE IF NOT EXISTS equipment(
         cid TEXT,
         text TEXT
-    )
-    """)
+    )""")
 
     db().commit()
     db().close()
 
-# ================= PARSER =================
+# ---------------- PARSER ----------------
 
 def parse(text):
     stats = {s:0 for s in STATS}
@@ -74,17 +71,15 @@ def parse(text):
         return stats
 
     for line in text.lower().split("\n"):
-
         for v,n in re.findall(r"([+-]?\d+)\s*([a-z]+)", line):
             v = int(v)
-
             for s in STATS:
                 if n.startswith(s[:3].lower()):
                     stats[s] += v
 
     return stats
 
-# ================= ROUTES =================
+# ---------------- ROUTES ----------------
 
 @app.route("/")
 def home():
@@ -153,7 +148,7 @@ def save(cid):
 
     return {"ok": True}
 
-# ================= REALTIME =================
+# ---------------- SOCKET ----------------
 
 @socketio.on("join")
 def join(data):
@@ -164,7 +159,7 @@ def roll(data):
     import random
     emit("roll_result", {"value": random.randint(1,20)}, room=data["cid"])
 
-# ================= BOOT =================
+# ---------------- BOOT ----------------
 
 init()
 
