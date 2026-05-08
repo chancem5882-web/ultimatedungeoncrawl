@@ -1,47 +1,56 @@
-<link rel="stylesheet" href="/static/style.css">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DCC MMO Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 
-<div class="header">
-DUNGEON CONTROL PANEL
-</div>
+<body>
 
-<div style="padding:20px;">
+<div class="header">DUNGEON CRAWLER MMO HUB</div>
+
+<div class="main">
 
 <div class="card">
 
-<form action="/create" method="post">
+<h2>Create Character</h2>
 
-<input
-name="name"
-placeholder="Crawler Name">
+<form action="/create" method="POST">
 
-<button>
-Create Character
-</button>
+<input name="name" placeholder="Crawler Name">
+
+<button type="submit">Create</button>
 
 </form>
 
 </div>
 
+<div class="card">
+
+<h2>Active Crawlers</h2>
+
 {% for c in chars %}
+<div class="skill">
+<b>{{c.name}}</b><br>
+<a href="/c/{{c.id}}">
+<button>Enter Character</button>
+</a>
+</div>
+{% endfor %}
+
+</div>
 
 <div class="card">
 
-<h2>{{c.name}}</h2>
-
-<a href="/character/{{c.id}}">
-<button>
-Open Character
-</button>
-</a>
-
-</div>
-
-{% endfor %}
+<h2>Dungeon AI Access</h2>
 
 <a href="/dm">
-<button>
-Dungeon AI
-</button>
+<button>Enter DM Panel</button>
 </a>
 
 </div>
+
+</div>
+
+</body>
+</html>
