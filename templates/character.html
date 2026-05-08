@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Character</title>
-    <link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-<div class="header">CRAWLER INTERFACE</div>
+<div class="header">CHARACTER SHEET</div>
 
 <div class="main">
 
@@ -16,12 +15,9 @@
 <h2>{{char.name}}</h2>
 
 HP {{meta.hp}} / {{meta.max_hp}}<br>
-Mana {{meta.mana}} / {{meta.max_mana}}<br>
-Level {{meta.level}}
+Mana {{meta.mana}} / {{meta.max_mana}}
 
-<br><br>
-
-<button onclick="roll()">🎲 Roll D20</button>
+<button onclick="roll()">Roll D20</button>
 
 </div>
 
@@ -32,8 +28,7 @@ Level {{meta.level}}
 {% for k,v in stats.items() %}
 <div class="skill">
 <b>{{k}}</b><br>
-Total: {{v.total}}<br>
-Modifier: {{v.mod}}
+{{v.total}} ({{v.mod}})
 </div>
 {% endfor %}
 
@@ -41,20 +36,13 @@ Modifier: {{v.mod}}
 
 <div class="card">
 
-<h2>Equipment (Auto Save)</h2>
+<h2>Equipment</h2>
 
 <div id="equipment" contenteditable="true" class="richbox">
 {{equipment}}
 </div>
 
-<button onclick="save()">Save Equipment</button>
-
-</div>
-
-<div class="card">
-
-<h2>Live Feed</h2>
-<div id="feed"></div>
+<button onclick="save()">Save</button>
 
 </div>
 
