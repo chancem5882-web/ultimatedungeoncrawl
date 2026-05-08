@@ -1,1 +1,47 @@
+<link rel="stylesheet" href="/static/style.css">
 
+<div class="header">
+DUNGEON CONTROL PANEL
+</div>
+
+<div style="padding:20px;">
+
+<div class="card">
+
+<form action="/create" method="post">
+
+<input
+name="name"
+placeholder="Crawler Name">
+
+<button>
+Create Character
+</button>
+
+</form>
+
+</div>
+
+{% for c in chars %}
+
+<div class="card">
+
+<h2>{{c.name}}</h2>
+
+<a href="/character/{{c.id}}">
+<button>
+Open Character
+</button>
+</a>
+
+</div>
+
+{% endfor %}
+
+<a href="/dm">
+<button>
+Dungeon AI
+</button>
+</a>
+
+</div>
