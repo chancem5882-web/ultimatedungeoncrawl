@@ -1,1 +1,56 @@
+<link rel="stylesheet" href="/static/style.css">
+<div style="padding:20px;">
 
+<div class="card">
+
+<h2>Send Message</h2>
+
+<form action="/message" method="post">
+
+<input name="sender" placeholder="Dungeon AI">
+<input name="category" placeholder="announcement">
+<input name="target" placeholder="all">
+<textarea name="content"></textarea>
+
+<button>
+Send
+</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h2>Apply Effect</h2>
+
+<form action="/effect" method="post">
+
+<input name="character_id" placeholder="Character ID">
+<input name="name" placeholder="Fragile">
+<input name="duration" placeholder="2">
+<textarea name="effect_text"></textarea>
+
+<button>
+Apply
+</button>
+
+</form>
+
+</div>
+
+{% for c in chars %}
+
+<div class="card">
+
+<h2>{{c.name}}</h2>
+
+<p>HP: {{c.hp}} / {{c.max_hp}}</p>
+<p>Mana: {{c.mana}} / {{c.max_mana}}</p>
+<p>Level: {{c.level}}</p>
+
+</div>
+
+{% endfor %}
+
+</div>
