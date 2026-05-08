@@ -1,6 +1,13 @@
-<link rel="stylesheet" href="/static/style.css">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Character</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
 
-<div class="header">DCC MMO SYSTEM</div>
+<body>
+
+<div class="header">CRAWLER INTERFACE</div>
 
 <div class="main">
 
@@ -9,9 +16,12 @@
 <h2>{{char.name}}</h2>
 
 HP {{meta.hp}} / {{meta.max_hp}}<br>
-Mana {{meta.mana}} / {{meta.max_mana}}
+Mana {{meta.mana}} / {{meta.max_mana}}<br>
+Level {{meta.level}}
 
-<button onclick="roll()">ROLL D20</button>
+<br><br>
+
+<button onclick="roll()">🎲 Roll D20</button>
 
 </div>
 
@@ -22,7 +32,8 @@ Mana {{meta.mana}} / {{meta.max_mana}}
 {% for k,v in stats.items() %}
 <div class="skill">
 <b>{{k}}</b><br>
-{{v.total}} (mod {{v.mod}})
+Total: {{v.total}}<br>
+Modifier: {{v.mod}}
 </div>
 {% endfor %}
 
@@ -30,13 +41,13 @@ Mana {{meta.mana}} / {{meta.max_mana}}
 
 <div class="card">
 
-<h2>Equipment</h2>
+<h2>Equipment (Auto Save)</h2>
 
-<div contenteditable="true" id="equipment" class="richbox">
+<div id="equipment" contenteditable="true" class="richbox">
 {{equipment}}
 </div>
 
-<button onclick="save()">SAVE</button>
+<button onclick="save()">Save Equipment</button>
 
 </div>
 
@@ -51,3 +62,6 @@ Mana {{meta.mana}} / {{meta.max_mana}}
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/static/app.js"></script>
+
+</body>
+</html>
