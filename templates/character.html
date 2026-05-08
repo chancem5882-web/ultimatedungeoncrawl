@@ -1,1 +1,52 @@
+<link rel="stylesheet" href="/static/style.css">
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<div class="header">
+{{char.name}}
+</div>
+
+<div class="main">
+
+<div>
+
+<div class="card">
+
+<h2>Vitals</h2>
+
+<input id="level" value="{{char.level}}">
+<input id="hp" value="{{char.hp}}">
+<input id="max_hp" value="{{char.max_hp}}">
+<input id="mana" value="{{char.mana}}">
+<input id="max_mana" value="{{char.max_mana}}">
+<input id="gold" value="{{char.gold}}">
+
+<button onclick="updateCharacter({{char.id}})">
+Update
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Stats</h2>
+
+<input id="strength" value="{{char.strength}}">
+<input id="dexterity" value="{{char.dexterity}}">
+<input id="intelligence" value="{{char.intelligence}}">
+<input id="constitution" value="{{char.constitution}}">
+<input id="charisma" value="{{char.charisma}}">
+
+</div>
+
+</div>
+
+<div>
+
+<div class="card">
+
+<h2>Equipment</h2>
+
+<textarea id="equipment">{{char.equipment}}</textarea>
+
+<script src="/static/socket.js"></script>
