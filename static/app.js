@@ -18,6 +18,5 @@ socket.emit("roll",{cid});
 }
 
 socket.on("roll_result",(d)=>{
-document.getElementById("feed").innerHTML =
-"🎲 Roll: "+d.result;
+alert("Rolled: " + d.value);
 });
